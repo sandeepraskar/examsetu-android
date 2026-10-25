@@ -1,0 +1,64 @@
+import type { CapacitorConfig } from '@capacitor/cli';
+
+// ─────────────────────────────────────────────────────────────────────────
+// ExamSetu Android wrapper
+//
+// Same approach as the GovtSetu app: this does NOT bundle a local copy of
+// the website. Instead, the WebView is pointed straight at the live site
+// (server.url below), the same way a browser would load it. That means:
+//   - Every student always sees the exact same site you maintain on the
+//     server — no separate "app version" of the content to keep in sync,
+//     and no need to publish a new APK every time you change the website.
+//   - All existing API calls (api/auth, api/practice, api/gemini, etc.)
+//     are same-origin from the WebView's point of view, so none of your
+//     CORS/auth code needs to change.
+//   - The app needs an internet connection to do anything useful, same as
+//     the website today — www/index.html (bundled locally) is only a
+//     "couldn't connect, try again" fallback screen shown if the site is
+//     briefly unreachable.
+//
+// Live URL confirmed from the uploaded source (API_BASE in js/core.js,
+// admin.html, student-charts.html all agree) and by fetching the page
+// directly — it really is deltacoresystems.in/examsetu_v1/, not
+// deltacoresystems.in/examsetu or /examsetu_new (those only appear in a
+// few old, unused debug-script comments).
+//
+// If you ever rename the domain or move off deltacoresystems.in, update
+// the two URLs below (server.url and the matching entry in
+// allowNavigation) and rebuild.
+// ─────────────────────────────────────────────────────────────────────────
+
+const LIVE_SITE = 'https://deltacoresystems.in/examsetu_v1/';
+
+const config: CapacitorConfig = {
+  appId: 'in.deltacoresystems.examsetu',
+  appName: 'ExamSetu',
+  webDir: 'www',
+  server: {
+    url: LIVE_SITE,
+    androidScheme: 'https',
+    // Any link the app navigates to that stays on your own domain loads
+    // inside the app's WebView; anything else (e.g. a payment-proof
+    // screenshot link, a "share on WhatsApp" link) is handed off to the
+    // phone's normal browser/app instead, which is the behavior students
+    // expect.
+    allowNavigation: ['deltacoresystems.in', '*.deltacoresystems.in'],
+  },
+  android: {
+    allowMixedContent: false,
+  },
+  plugins: {
+    SplashScreen: {
+      launchShowDuration: 1200,
+      // Matches css/app.css's --bg for ExamSetu's (default) dark theme.
+      backgroundColor: '#0B1120',
+      androidSplashResourceName: 'splash',
+      showSpinner: false,
+    },
+    PushNotifications: {
+      presentationOptions: ['badge', 'sound', 'alert'],
+    },
+  },
+};
+
+export default config;
